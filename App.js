@@ -60,36 +60,39 @@ const App = () => {
   };
 
   // device info
-  const [isActive, setIsActive] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
   const [isCharging, setIsCharging] = useState(false);
   const [powerState, setPowerState] = useState("");
   const [batterylvl, setBatteryLvl] = useState("");
   const [serial, setSerial] = useState("");
   
-  isBatteryCharging().then((charging) => setIsCharging(charging));
   getPowerState().then((state) => {
     setBatteryLvl(state.batteryLevel);
     setPowerState(state.batteryState);
   });
-  
+
+  // a cada 2s verifica se o dispositivo está ou não carregando
+  setInterval(() => {
+    isBatteryCharging().then((charging) => setIsCharging(charging));
+  }, 2000);  
   // device info
 
   useEffect(() => {
     if(AutoStart.isCustomAndroid()) {
       AutoStart.startAutostartSettings();
     }
-    Unstoppable.startService(); // impedir que ative mais de uma vez
-    setIsActive(true);
+    Unstoppable.startService(); // TODO: impedir que ative mais de uma vez
+    setIsRunning(true);
     getSerialNumber().then((serialNumber) => setSerial(serialNumber));
   }, []);
   
   return (
     <View style={styles.container}>
       <View style={styles.view}>
-        {!isActive ?
+        {!isRunning ?
           <Text>Serviço não iniciado.</Text>
           :
-          isActive && isCharging ?
+          isRunning && isCharging ?
             <>
               <Text>Estado de carregamento: {powerState}</Text>
               <Text>Bateria: {(batterylvl*100).toFixed(0)}%</Text>
@@ -100,10 +103,7 @@ const App = () => {
             :
             <Text>Dispositivo não conectado.</Text>
         }
-        {/* <TouchableOpacity style={styles.button} onPress={() => {Unstoppable.startService(); setIsActive(true);}}>
-          <Text style={styles.instructions}>Start</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.button} onPress={() => {Unstoppable.stopService(); setIsActive(false); console.log("O serviço foi parado.")}}>
+        <TouchableOpacity style={styles.button} onPress={() => {Unstoppable.stopService(); setIsRunning(false); console.log("O serviço foi parado.")}}>
           <Text style={styles.instructions}>Stop</Text>
         </TouchableOpacity>  
         <TouchableOpacity style={styles.button} onPress={getPermissions}>
@@ -126,4 +126,5 @@ export default connect(mapStateToProps)(App);
 apenas 1 única vez;
 - só pode puxar as informações quando o dispositivo estiver plugado no usb, ou seja,
 carregando;
+- trocar o setInterval para o reconhecimento do usb quando plugado;
 */
