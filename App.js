@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,9 @@ import {
 // device-info lib
 import DeviceInfo from 'react-native-device-info';
 import { getDevice, getPowerState, isBatteryCharging } from 'react-native-device-info';
+
+// auto-start lib
+import RNAutostart from 'react-native-autostart';
 
 // heart-beat tutorial
 import { connect } from 'react-redux';
@@ -55,6 +58,14 @@ const App = () => {
   });
   // device info
 
+  useEffect(() => {
+    if(AutoStart.isCustomAndroid()) {
+      AutoStart.startAutostartSettings();
+    }
+    Unstoppable.startService(); // impedir que ative mais de uma vez
+    setIsActive(true);
+  }, []);
+  
   return (
     <View style={styles.container}>
       <View style={styles.view}>
@@ -77,9 +88,9 @@ const App = () => {
             :
             <Text>Dispositivo não conectado.</Text>
         }
-        <TouchableOpacity style={styles.button} onPress={() => {Unstoppable.startService(); setIsActive(true);}}>
+        {/* <TouchableOpacity style={styles.button} onPress={() => {Unstoppable.startService(); setIsActive(true);}}>
           <Text style={styles.instructions}>Start</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity style={styles.button} onPress={() => {Unstoppable.stopService(); setIsActive(false); console.log("O serviço foi parado.")}}>
           <Text style={styles.instructions}>Stop</Text>
         </TouchableOpacity>
@@ -93,3 +104,12 @@ const mapStateToProps = store => ({
 });
 
 export default connect(mapStateToProps)(App);
+
+
+/* TODO:
+- serviço iniciando sempre que abre o app, ou seja, deve ser limitado a startar
+apenas 1 única vez;
+- só pode puxar as informações quando o dispositivo estiver plugado no usb, ou seja,
+carregando;
+- implementar o getSerialNumber() da lib device-info
+*/
