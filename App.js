@@ -38,24 +38,22 @@ const styles = StyleSheet.create({
 
 const App = () => {
   const getPermissions = async () => {
-    
-      // Calling the permission function
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
-        {
-          title: 'Example App PHONE STATE Permission',
-          message: 'Example App needs access to your PHONE STATE',
-          buttonNeutral: "Ask Me Later",
-          buttonNegative: "Cancel",
-          buttonPositive: "OK"
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+      {
+        title: 'Permissão para obter informações sobre o dispositivo',
+        message: 'Para uso total do aplicativo é necessário permitir a leitura das informações sobre o dispositivo.',
+        buttonNeutral: "Pergunte-me depois",
+        buttonNegative: "Cancelar",
+        buttonPositive: "OK"
         },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         // Permission Granted
-        alert('PHONE STATE Permission granted');
+        alert('Permissão concedida.');
       } else {
         // Permission Denied
-        alert('PHONE STATE Permission Denied');
+        alert('Permissão negada.');
       }
   };
 
@@ -65,16 +63,15 @@ const App = () => {
   const [powerState, setPowerState] = useState("");
   const [batterylvl, setBatteryLvl] = useState("");
   const [serial, setSerial] = useState("");
-  
-  getPowerState().then((state) => {
-    setBatteryLvl(state.batteryLevel);
-    setPowerState(state.batteryState);
-  });
 
   // a cada 2s verifica se o dispositivo está ou não carregando
   setInterval(() => {
     isBatteryCharging().then((charging) => setIsCharging(charging));
-  }, 2000);  
+    getPowerState().then((state) => {
+      setBatteryLvl(state.batteryLevel);
+      setPowerState(state.batteryState);
+    });
+  }, 2000);
   // device info
 
   useEffect(() => {
