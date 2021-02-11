@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import com.melihyarikkaya.rnserialport.RNSerialportPackage;
 import com.ssg.autostart.AutostartPackage;
 import com.melihyarikkaya.rnserialport.RNSerialportPackage;
 import com.facebook.react.ReactNativeHost;
