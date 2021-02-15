@@ -1,11 +1,11 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   PermissionsAndroid,
-  DeviceEventEmitter
+  SafeAreaView,
 } from 'react-native';
 
 // device-info lib
@@ -14,8 +14,7 @@ import { getPowerState, isBatteryCharging, getSerialNumber } from 'react-native-
 // auto-start lib
 import AutoStart from 'react-native-autostart';
 
-// serial-port lib
-import { RNSerialport, definitions, actions } from "react-native-serialport";
+import ManualConnection from "./usbService";
 
 // heart-beat tutorial
 import { connect } from 'react-redux';
@@ -24,12 +23,6 @@ import Unstoppable from './Unstoppable';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  view: {
-    flex: 0.5,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -47,13 +40,6 @@ const App = () => {
   const [powerState, setPowerState] = useState("");
   const [batterylvl, setBatteryLvl] = useState("");
   const [serial, setSerial] = useState("");
-  // serial port
-  const [serviceStarted, setServiceStarted] = useState(false);
-  const [usbAttached, setUsbAttached] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [returnedDataType, setReturnedDataType] = useState(definitions.RETURNED_DATA_TYPES.HEXSTRING);
-  const [output, setOutput] = useState("");
-  const [baudRate, setBaudRate] = useState("115200");
   
   const getPermissions = async () => {
     const granted = await PermissionsAndroid.request(
@@ -66,44 +52,6 @@ const App = () => {
         },
       );
       granted === PermissionsAndroid.RESULTS.GRANTED ? alert('Permissão concedida.') : alert('Permissão negada.');
-  }
-
-  function onServiceStarted(response) {
-    setServiceStarted(true);
-    if (response.deviceAttached) {
-      onDeviceAttached();
-    }
-  }
-  function onServiceStopped() {
-    setServiceStarted(false);
-  }
-  function onDeviceAttached() {
-    setUsbAttached(true);
-  }
-  function onDeviceDetached() {
-    setUsbAttached(false);
-  }
-  function onConnected() {
-    setConnected(true);
-  }
-  function onDisconnected() {
-    setConnected(false);
-  }
-  function onReadData(data) {
-    if (
-      returnedDataType === definitions.RETURNED_DATA_TYPES.INTARRAY
-    ) {
-      const payload = RNSerialport.intArrayToUtf16(data.payload);
-      setOutput("Output: " + output + payload);
-    } else if (
-      returnedDataType === definitions.RETURNED_DATA_TYPES.HEXSTRING
-    ) {
-      const payload = RNSerialport.hexToUtf16(data.payload);
-      setOutput("Output: " + output + payload);
-    }
-  }
-  function onError(error) {
-    console.error(error);
   }
 
   // a cada 2s verifica se o dispositivo está ou não carregando
@@ -125,55 +73,10 @@ const App = () => {
     setIsRunning(true);
     getSerialNumber().then((serialNumber) => setSerial(serialNumber));
   }, []);
-
-  const sendData = useCallback(() => {
-    DeviceEventEmitter.addListener(
-      actions.ON_SERVICE_STARTED,
-      onServiceStarted
-    );
-    DeviceEventEmitter.addListener(
-      actions.ON_SERVICE_STOPPED,
-      onServiceStopped
-    );
-    DeviceEventEmitter.addListener(
-      actions.ON_DEVICE_ATTACHED,
-      onDeviceAttached
-    );
-    DeviceEventEmitter.addListener(
-      actions.ON_DEVICE_DETACHED,
-      onDeviceDetached
-    );
-    DeviceEventEmitter.addListener(actions.ON_ERROR, onError, this);
-    DeviceEventEmitter.addListener(
-      actions.ON_CONNECTED,
-      onConnected
-    );
-    DeviceEventEmitter.addListener(
-      actions.ON_DISCONNECTED,
-      onDisconnected
-    );
-    DeviceEventEmitter.addListener(actions.ON_READ_DATA, onReadData, this);
-    RNSerialport.setReturnedDataType(returnedDataType);
-    RNSerialport.setAutoConnectBaudRate(parseInt(baudRate, 10));
-    //RNSerialport.setInterface(parseInt(interface, 10));
-    RNSerialport.setAutoConnect(true);
-    RNSerialport.startUsbService();
-  });
-
-  stopUsbListener = async () => {
-    DeviceEventEmitter.removeAllListeners();
-    const isOpen = await RNSerialport.isOpen();
-    if (isOpen) {
-      Alert.alert("isOpen", isOpen);
-      RNSerialport.disconnect();
-    }
-    RNSerialport.stopUsbService();
-  };
-
   
   return (
-    <View style={styles.container}>
-      <View style={styles.view}>
+    <SafeAreaView style={styles.container}>
+      <View>
         {!isRunning ?
           <Text>Serviço não iniciado.</Text>
           :
@@ -194,11 +97,9 @@ const App = () => {
         <TouchableOpacity style={styles.button} onPress={getPermissions}>
           <Text>Permissions to getSerial</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={sendData}>
-          <Text>Send Data to USB Server</Text>
-        </TouchableOpacity>
+        <ManualConnection message={batterylvl} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -215,4 +116,5 @@ apenas 1 única vez;
 - só pode puxar as informações quando o dispositivo estiver plugado no usb, ou seja,
 carregando;
 - trocar o setInterval para o reconhecimento do usb quando plugado;
+- getSerial não está funcionando;
 */
